@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>学习助手</title>
+<link rel="stylesheet" href="/study-tutor/ui.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">📚</div>
+    <div>
+      <div class="brand-title">学习助手</div>
+      <div class="brand-sub" id="sub">随时问，不打扰主会话</div>
+    </div>
+  </div>
+  <div class="header-spacer"></div>
+  <span class="model-badge" id="model"><span class="dot"></span>模型加载中</span>
+  <button class="icon-btn" id="notesBtn" title="错题本" aria-label="打开错题本">📕</button>
+  <button class="icon-btn" id="clearBtn" title="清空对话" aria-label="清空对话">🗑️</button>
+  <button class="icon-btn" id="settingsBtn" title="界面设置" aria-label="打开界面设置">⚙️</button>
+</header>
+
+<div id="chips">
+  <button class="chip" data-act="explain"><span>💡</span>解释这段</button>
+  <button class="chip" data-act="quiz"><span>📝</span>出题考我</button>
+  <button class="chip" data-act="summary"><span>📌</span>总结要点</button>
+  <button class="chip" data-act="counter"><span>🔀</span>举个反例</button>
+  <button class="chip" data-act="check"><span>✅</span>检查答案</button>
+  <button class="chip" id="shotBtn" title="区域截图并发送（Ctrl+Alt+S）"><span>📷</span>截图</button>
+  <button class="chip" id="libToggle" title="提问时自动检索课程资料库"><span>📚</span>查资料</button>
+</div>
+
+<div id="ctxWrap">
+  <button id="ctxToggle" aria-expanded="false">＋ 粘贴题目 / 代码作为参考</button>
+  <textarea id="ctx" placeholder="把题目、代码或课件片段粘贴到这里，提问时会一起发给 AI…"></textarea>
+</div>
+
+<div id="msgs"></div>
+<button id="jump" title="回到最新" aria-label="回到最新">↓</button>
+
+<footer>
+  <div id="attachBar"></div>
+  <div class="hint-row">
+    <span><kbd>Enter</kbd> 发送 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> 截图 · DeepSeek</span>
+  </div>
+  <div class="composer">
+    <button class="attach-btn" id="attachBtn" title="添加图片（也可以直接粘贴或拖进来）" aria-label="添加图片">📎</button>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <textarea id="input" rows="1" placeholder="问点什么…" aria-label="提问输入框"></textarea>
+    <button class="send-btn" id="send" title="发送" aria-label="发送">➤</button>
+  </div>
+</footer>
+
+<div id="overlay"></div>
+<aside id="drawer" aria-label="错题本">
+  <header>
+    <div class="brand">
+      <div class="brand-logo" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">📕</div>
+      <div><div class="brand-title">错题本</div><div class="brand-sub" id="noteCount">0 条记录</div></div>
+    </div>
+    <div class="header-spacer"></div>
+    <button class="icon-btn" id="closeDrawer" title="关闭" aria-label="关闭错题本">✕</button>
+  </header>
+  <div id="notes"></div>
+</aside>
+
+<div id="sheetWrap"></div>
+<aside id="settings" aria-label="界面设置">
+  <header>
+    <div class="brand">
+      <div class="brand-logo" style="background:linear-gradient(135deg,#64748b,#334155)">⚙️</div>
+      <div><div class="brand-title">界面设置</div><div class="brand-sub">外观、密度与窗口</div></div>
+    </div>
+    <div class="header-spacer"></div>
+    <button class="icon-btn" id="closeSettings" title="关闭" aria-label="关闭设置">✕</button>
+  </header>
+  <div class="settings-body">
+    <section class="set-group">
+      <div class="set-title">主题</div>
+      <div class="seg" id="themeSeg">
+        <button data-v="auto">跟随系统</button>
+        <button data-v="light">浅色</button>
+        <button data-v="dark">深色</button>
+      </div>
+    </section>
+
+    <section class="set-group">
+      <div class="set-title">窗口透明度 <span id="opacityVal">96%</span></div>
+      <input type="range" id="opacityRange" min="55" max="100" step="1" value="96">
+      <div class="set-hint">整窗半透明，可以透出后面的代码和网页（40% = 很透，100% = 完全不透明）</div>
+    </section>
+
+    <section class="set-group">
+      <div class="set-title">字号 <span id="fontVal">14px</span></div>
+      <input type="range" id="fontRange" min="12" max="17" step="1" value="14">
+    </section>
+
+    <section class="set-group">
+      <div class="set-title">窗口大小</div>
+      <div class="seg" id="sizeSeg">
+        <button data-w="420" data-h="560">小</button>
+        <button data-w="480" data-h="640">中</button>
+        <button data-w="560" data-h="760">大</button>
+      </div>
+      <div class="set-hint" id="sizeHint">当前窗口由 Electron 控制尺寸（仅桌面端可用）</div>
+    </section>
+
+    <section class="set-group">
+      <div class="set-title">显示</div>
+      <label class="row"><span>紧凑模式（更小的间距）</span><input type="checkbox" id="compactChk"></label>
+      <label class="row"><span>显示头像</span><input type="checkbox" id="avatarChk" checked></label>
+      <label class="row"><span>动画效果</span><input type="checkbox" id="animChk" checked></label>
+    </section>
+
+    <section class="set-group">
+      <div class="set-title">发送方式</div>
+      <div class="seg" id="sendSeg">
+        <button data-v="enter">Enter 发送</button>
+        <button data-v="ctrl">Ctrl+Enter 发送</button>
+      </div>
+    </section>
+
+    <section class="set-group">
+      <div class="set-title">快捷键</div>
+      <div class="shortcuts">
+        <div class="sc-row"><kbd>Enter</kbd><span>发送（可在上面切换成 Ctrl+Enter）</span></div>
+        <div class="sc-row"><kbd>Shift+Enter</kbd><span>换行</span></div>
+        <div class="sc-row"><kbd>Ctrl+Alt+S</kbd><span>系统级区域截图并发送（也可点快捷栏「📷 截图」）</span></div>
+        <div class="sc-row"><kbd>Ctrl+K</kbd><span>新对话 / 清空当前对话</span></div>
+        <div class="sc-row"><kbd>Ctrl+L</kbd><span>打开 / 关闭错题本</span></div>
+        <div class="sc-row"><kbd>Ctrl+,</kbd><span>打开 / 关闭设置</span></div>
+        <div class="sc-row"><kbd>Ctrl+/</kbd><span>把光标放回输入框</span></div>
+        <div class="sc-row"><kbd>Alt+1…5</kbd><span>快捷指令（解释 / 出题 / 总结 / 反例 / 检查）</span></div>
+        <div class="sc-row"><kbd>Esc</kbd><span>停止生成；没有生成时关闭面板</span></div>
+      </div>
+    </section>
+
+    <button class="reset" id="resetSettings">恢复默认设置</button>
+  </div>
+</aside>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Electron 窗口：8 方向拖拽缩放手柄（仅透明窗口模式显示） -->
+<div class="resize-handle" data-dir="n"></div>
+<div class="resize-handle" data-dir="s"></div>
+<div class="resize-handle" data-dir="e"></div>
+<div class="resize-handle" data-dir="w"></div>
+<div class="resize-handle" data-dir="ne"></div>
+<div class="resize-handle" data-dir="nw"></div>
+<div class="resize-handle" data-dir="se"></div>
+<div class="resize-handle" data-dir="sw"></div>
+
+<script src="/study-tutor/ui.js"></script>
+</body>
+</html>

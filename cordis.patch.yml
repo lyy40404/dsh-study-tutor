@@ -1,0 +1,4 @@
+# dsh-study-tutor bundle patch: mount the host plugin under its package name.
+- insert:
+    - id: study-tutor
+      name: dsh-study-tutor
