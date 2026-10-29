@@ -4,7 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>学习助手</title>
-<link rel="stylesheet" href="/study-tutor/ui.css">
+<link rel="stylesheet" href="/study-tutor/ui.base.css">
+<link rel="stylesheet" href="/study-tutor/ui.chat.css">
+<link rel="stylesheet" href="/study-tutor/ui.panels.css">
 </head>
 <body>
 
@@ -122,6 +124,17 @@
         <button data-v="enter">Enter 发送</button>
         <button data-v="ctrl">Ctrl+Enter 发送</button>
       </div>
+    </section>
+
+    <section class="set-group">
+      <div class="set-title">人格通道</div>
+      <div class="seg" id="personaSeg">
+        <button data-v="default">默认</button>
+        <button data-v="strict">严格老师</button>
+        <button data-v="fun">幽默学长</button>
+        <button data-v="brief">极简</button>
+      </div>
+      <textarea id="personaText" rows="3" placeholder="自定义系统提示词（留空则使用上面选中的人格预设）"></textarea>
     </section>
 
     <section class="set-group">

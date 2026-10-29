@@ -9,12 +9,14 @@
 - **独立置顶浮窗**：Electron 无边框透明窗口，背景透明、文字不透明，可拖拽移动/缩放/记忆位置
 - **点击穿透**：窗口边缘 24px 透明区域可直接点到后面的窗口
 - **LLM 流式对话**：Markdown 渲染、代码块语法高亮（Python/C/C++/JS/TS/Java/SQL/JSON/Bash）+ 行号 + 一键复制
-- **截图提问**：`Ctrl+Alt+S` 或 📷 按钮，调用 Windows 系统截图（区域选择），图片作为附件提问
+- **截图提问**：`Ctrl+Alt+S` 或 `F2` 或 📷 按钮，调用 Windows 系统截图（区域选择），图片作为附件提问
 - **图片附件**：📎 按钮 / 粘贴 / 拖拽，最多 4 张（8MB/张）
+- **人格通道**：设置里可选「默认 / 严格老师 / 幽默学长 / 极简」四种系统提示词，也支持完全自定义提示词
 - **查资料**：📚 开关接入 dsh-library 知识库检索（课程资料），回答可带引用
 - **错题本**：对话中「加入错题本」，本地保存、可回顾复习
-- **快捷键**：`Enter` 发送、`Shift+Enter` 换行、`Ctrl+K` 新对话、`Ctrl+L` 错题本、`Ctrl+,` 设置、`Ctrl+/` 聚焦输入框、`Alt+1..5` 预设提问、`Esc` 停止生成
-- **设置**：主题（跟随系统/亮/暗）、字号、紧凑模式、发送方式、窗口尺寸（小/中/大）
+- **推理档位**：默认 `reasoningEffort: low`（题目解答场景快且省 token）
+- **快捷键**：`Enter` 发送、`Shift+Enter` 换行、`Ctrl+Alt+S`/`F2` 截图、`Ctrl+K` 新对话、`Ctrl+L` 错题本、`Ctrl+,` 设置、`Ctrl+/` 聚焦输入框、`Alt+1..5` 预设提问、`Esc` 停止生成
+- **设置**：主题（跟随系统/亮/暗）、字号、紧凑模式、发送方式、人格通道、窗口尺寸（小/中/大）
 - **`/study` 命令**：在主会话里输入 `/study` 直接打开学习助手窗口
 
 ![界面](docs/screenshot-ui.png)
@@ -62,8 +64,12 @@ lib/
   search.js           知识库检索（子进程）
   ask.js              LLM 流式问答（ctx.llm.stream + 图片附件）
   commands.js         /study 斜杠命令
-ui.html / ui.css / ui.js   前端界面（聊天、附件、设置、错题本）
-*.py                  窗口透明度 / 截图 / 检索脚本
+ui.html             页面结构
+ui.base.css         基础样式（设计变量 / 透明窗口 / 顶栏 / 快捷栏）
+ui.chat.css         聊天区样式（上下文 / 消息气泡 / 代码块 / 输入区 / 附件）
+ui.panels.css       面板样式（错题本抽屉 / 主题覆盖 / 设置面板 / Toast）
+ui.js               前端逻辑（聊天、附件、设置、错题本、代码高亮）
+*.py                窗口透明度 / 截图 / 检索脚本
 open-study-tutor.ps1  窗口启动器（Electron 优先，Edge 回退）
 ```
 
@@ -74,8 +80,8 @@ Electron 透明窗口（480×640）
    │  http://127.0.0.1:<DSH端口>/study-tutor/*
    ▼
 host 插件（本仓库 index.js）
-   ├─ webServer 路由：/study-tutor/{ui,ui.css,ui.js,models,ask,search,screenshot,open,window}
-   ├─ ctx.llm.stream：流式问答（SSE 回传）
+   ├─ webServer 路由：/study-tutor/{ui,ui.base.css,ui.chat.css,ui.panels.css,ui.css,ui.js,models,ask,search,screenshot,open,window}
+   ├─ ctx.llm.stream：流式问答（SSE 回传，reasoningEffort: low）
    ├─ ctx.attachments.admitPromptContent：图片附件
    └─ 子进程：Python 脚本（透明度/截图/检索）
 ```

@@ -57,8 +57,33 @@ function makeRoutes(ctx) {
     },
     {
       kind: 'exact',
+      path: '/study-tutor/ui.base.css',
+      handler: (req, res) => serveFile(res, UI_FILES.css.base, 'text/css; charset=utf-8'),
+    },
+    {
+      kind: 'exact',
+      path: '/study-tutor/ui.chat.css',
+      handler: (req, res) => serveFile(res, UI_FILES.css.chat, 'text/css; charset=utf-8'),
+    },
+    {
+      kind: 'exact',
+      path: '/study-tutor/ui.panels.css',
+      handler: (req, res) => serveFile(res, UI_FILES.css.panels, 'text/css; charset=utf-8'),
+    },
+    {
+      kind: 'exact',
       path: '/study-tutor/ui.css',
-      handler: (req, res) => serveFile(res, UI_FILES.css, 'text/css; charset=utf-8'),
+      // 兼容旧地址：整包样式仍可访问（按顺序拼接三个文件）
+      handler: (req, res) => {
+        try {
+          const parts = [UI_FILES.css.base, UI_FILES.css.chat, UI_FILES.css.panels]
+            .map((file) => readFileSync(file, 'utf8'))
+          res.writeHead(200, { 'content-type': 'text/css; charset=utf-8', 'cache-control': 'no-store' })
+          res.end(parts.join('\n'))
+        } catch {
+          sendJson(res, 500, { ok: false, error: 'css read failed' })
+        }
+      },
     },
     {
       kind: 'exact',

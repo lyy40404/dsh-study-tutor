@@ -344,6 +344,7 @@
           history: history.slice(-9, -1).map((m) => ({ role: m.role, text: m.text })),
           provider: model && model.provider,
           model: model && model.model,
+          systemPrompt: currentSystemPrompt(),
         }),
         signal: controller.signal,
       });
@@ -618,8 +619,7 @@
     // F2 备用截图键（防止 Ctrl+Alt+S 被输入法/安全软件抢占）
     if (e.key === 'F2') {
       e.preventDefault();
-      toast('F2 已触发，准备截图…');
-      setTimeout(() => captureScreenshot(), 60);
+      captureScreenshot();
       return;
     }
     // Ctrl+L 错题本
@@ -659,7 +659,26 @@
 
   /* ================= settings ================= */
   const STORE_SETTINGS = 'study-tutor:settings:v1';
-  const DEFAULT_SETTINGS = { theme: 'auto', opacity: 1, fontSize: 14, compact: false, avatar: true, anim: true, sendKey: 'enter' };
+  const DEFAULT_SETTINGS = { theme: 'auto', opacity: 1, fontSize: 14, compact: false, avatar: true, anim: true, sendKey: 'enter', persona: 'default', personaText: '' };
+  // 人格预设：系统提示词（自定义 personaText 优先）
+  const PERSONAS = {
+    default: [
+      '你是一位耐心的学习助手，面向工科大学生（物联网工程专业，正在学 C 语言、离散数学、Python、机器学习）。',
+      '回答要求：先给结论再讲理由；代码用 Markdown 代码块并标注语言；数学公式用 LaTeX；解释点到为止，避免罗嗦。',
+    ].join('\n'),
+    strict: [
+      '你是一位严格的老师，风格简洁直接。',
+      '要求：先判断学生答案对错并说明扣分点；只讲关键原因，不铺垫；语气严肃但尊重，不鼓励式废话。',
+    ].join('\n'),
+    fun: [
+      '你是一位幽默的学长，风格轻松活泼，喜欢用生活化类比和梗来解释概念。',
+      '要求：教学本质不变（准确），但表达要有趣、有画面感；代码和公式仍然要严谨。',
+    ].join('\n'),
+    brief: [
+      '你是极简回答助手：只给最终答案和最关键的一两步推导，不展开背景知识。',
+      '适合刷题核对；必要时用一句话点出易错点。',
+    ].join('\n'),
+  };
   let settings = Object.assign({}, DEFAULT_SETTINGS, (() => {
     try { return JSON.parse(localStorage.getItem(STORE_SETTINGS) || 'null') || {} } catch { return {} }
   })());
@@ -668,6 +687,13 @@
   let opacityTimer = null;
 
   const saveSettings = () => { try { localStorage.setItem(STORE_SETTINGS, JSON.stringify(settings)) } catch {} };
+
+  /** 当前生效的系统提示词：自定义 > 预设 > 空 */
+  function currentSystemPrompt() {
+    const custom = typeof settings.personaText === 'string' ? settings.personaText.trim() : '';
+    if (custom) return custom;
+    return PERSONAS[settings.persona] || PERSONAS.default;
+  }
 
   function applySettings() {
     const root = document.documentElement;
@@ -683,6 +709,8 @@
   function syncSettingsUI() {
     document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('active', b.dataset.v === settings.theme));
     document.querySelectorAll('#sendSeg button').forEach((b) => b.classList.toggle('active', b.dataset.v === settings.sendKey));
+    document.querySelectorAll('#personaSeg button').forEach((b) => b.classList.toggle('active', b.dataset.v === settings.persona));
+    if ($('personaText')) $('personaText').value = settings.personaText || '';
     $('opacityRange').value = Math.round(settings.opacity * 100);
     $('opacityVal').textContent = Math.round(settings.opacity * 100) + '%';
     $('fontRange').value = settings.fontSize;
@@ -733,6 +761,11 @@
 
   document.querySelectorAll('#themeSeg button').forEach((b) => b.addEventListener('click', () => updateSetting('theme', b.dataset.v)));
   document.querySelectorAll('#sendSeg button').forEach((b) => b.addEventListener('click', () => updateSetting('sendKey', b.dataset.v)));
+  // 人格通道：预设切换 + 自定义提示词（失焦保存）
+  document.querySelectorAll('#personaSeg button').forEach((b) => b.addEventListener('click', () => updateSetting('persona', b.dataset.v)));
+  if ($('personaText')) {
+    $('personaText').addEventListener('change', (e) => updateSetting('personaText', String(e.target.value || '')));
+  }
   // 拖动时只做即时视觉预览（CSS），松手（change）才真正设置窗口 alpha
   $('opacityRange').addEventListener('input', (e) => {
     const v = Number(e.target.value) / 100;
