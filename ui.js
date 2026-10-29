@@ -609,20 +609,27 @@
       closeSettings();
       return;
     }
-    // Ctrl+Alt+S 截图并发送（避开 Edge 自带的 Ctrl+Shift+S 网页捕获）
-    if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === 's') {
+    // Ctrl+Alt+S 截图并发送（用 e.code 按键位判断：Alt 按下时 e.key 会变，不能用来匹配）
+    if ((e.ctrlKey || e.metaKey) && e.altKey && (e.code === 'KeyS' || e.key.toLowerCase() === 's')) {
       e.preventDefault();
       captureScreenshot();
       return;
     }
+    // F2 备用截图键（防止 Ctrl+Alt+S 被输入法/安全软件抢占）
+    if (e.key === 'F2') {
+      e.preventDefault();
+      toast('F2 已触发，准备截图…');
+      setTimeout(() => captureScreenshot(), 60);
+      return;
+    }
     // Ctrl+L 错题本
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+    if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyL' || e.key.toLowerCase() === 'l')) {
       e.preventDefault();
       if (drawer.classList.contains('open')) closeDrawer(); else openDrawer();
       return;
     }
     // Ctrl+K 新对话
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyK' || e.key.toLowerCase() === 'k')) {
       e.preventDefault();
       history = [];
       saveChat();
@@ -631,7 +638,7 @@
       return;
     }
     // Ctrl+, 设置
-    if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+    if ((e.ctrlKey || e.metaKey) && (e.code === 'Comma' || e.key === ',')) {
       e.preventDefault();
       if ($('settings').classList.contains('open')) closeSettings(); else openSettings();
       return;

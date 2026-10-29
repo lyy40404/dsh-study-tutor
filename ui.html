@@ -24,13 +24,13 @@
 </header>
 
 <div id="chips">
-  <button class="chip" data-act="explain"><span>💡</span>解释这段</button>
-  <button class="chip" data-act="quiz"><span>📝</span>出题考我</button>
-  <button class="chip" data-act="summary"><span>📌</span>总结要点</button>
-  <button class="chip" data-act="counter"><span>🔀</span>举个反例</button>
-  <button class="chip" data-act="check"><span>✅</span>检查答案</button>
+  <button class="chip" data-act="explain" title="逐句解释这段内容"><span>💡</span>解释</button>
+  <button class="chip" data-act="quiz" title="围绕这个知识点出题"><span>📝</span>出题</button>
+  <button class="chip" data-act="summary" title="提炼要点和结论"><span>📌</span>总结</button>
+  <button class="chip" data-act="counter" title="给出反例帮助理解边界"><span>🔀</span>反例</button>
+  <button class="chip" data-act="check" title="检查我的答案是否正确"><span>✅</span>检查</button>
   <button class="chip" id="shotBtn" title="区域截图并发送（Ctrl+Alt+S）"><span>📷</span>截图</button>
-  <button class="chip" id="libToggle" title="提问时自动检索课程资料库"><span>📚</span>查资料</button>
+  <button class="chip" id="libToggle" title="提问时自动检索课程资料库"><span>📚</span>资料</button>
 </div>
 
 <div id="ctxWrap">
@@ -45,7 +45,7 @@
   <div id="attachBar"></div>
   <div class="hint-row">
     <span><kbd>Enter</kbd> 发送 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行</span>
-    <span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> 截图 · DeepSeek</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd> / <kbd>F2</kbd> 截图 · DeepSeek</span>
   </div>
   <div class="composer">
     <button class="attach-btn" id="attachBtn" title="添加图片（也可以直接粘贴或拖进来）" aria-label="添加图片">📎</button>

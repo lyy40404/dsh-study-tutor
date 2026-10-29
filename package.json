@@ -1,6 +1,6 @@
 {
   "name": "dsh-study-tutor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Study tutor companion window for DeepSeek Harness: a standalone floating study assistant that streams answers from the harness LLM service.",
   "type": "module",
   "main": "index.js",
