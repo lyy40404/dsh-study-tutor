@@ -35,6 +35,8 @@
 
   const STORE_LIB = 'study-tutor:lib:v1';
   let libOn = localStorage.getItem(STORE_LIB) === '1';
+  const STORE_WEB = 'study-tutor:web:v1';
+  let webOn = localStorage.getItem(STORE_WEB) === '1';
   let pendingImages = [];   // [{ mediaType, data(base64), name, thumb(dataURL) }]
   let history = [];
   let controller = null;
@@ -52,6 +54,33 @@
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+  }
+
+  /** 复制文本：优先异步剪贴板 API，失败回退 execCommand（Electron/旧浏览器兼容）。 */
+  async function copyText(text) {
+    const value = String(text || '');
+    if (!value) return false;
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+    } catch { /* fall through to execCommand */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.style.position = 'fixed';
+      ta.style.top = '-9999px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch {
+      return false;
+    }
   }
 
   function escapeHtml(s) {
@@ -220,8 +249,8 @@
       const copyBtn = document.createElement('button');
       copyBtn.textContent = '📋 复制';
       copyBtn.onclick = async () => {
-        try { await navigator.clipboard.writeText(bubble.dataset.raw || text || bubble.textContent); toast('已复制'); }
-        catch { toast('复制失败'); }
+        const ok = await copyText(bubble.dataset.raw || text || bubble.textContent);
+        toast(ok ? '已复制' : '复制失败');
       };
       meta.appendChild(copyBtn);
     }
@@ -345,6 +374,7 @@
           provider: model && model.provider,
           model: model && model.model,
           systemPrompt: currentSystemPrompt(),
+          web: webOn,
         }),
         signal: controller.signal,
       });
@@ -368,6 +398,10 @@
           try { evt = JSON.parse(chunk.slice(5).trim()); } catch { continue; }
           if (evt.type === 'delta') acc += evt.text;
           else if (evt.type === 'error') failed = evt.message || '未知错误';
+          else if (evt.type === 'web') {
+            if (evt.ok) toast('已联网搜索 ' + (evt.sources || 0) + ' 条结果');
+            else toast('联网搜索失败：' + (evt.error || '未知错误'));
+          }
           if (acc && !failed) node._raw = acc;
         }
       }
@@ -553,7 +587,7 @@
   });
   inputEl.addEventListener('input', autoGrow);
 
-  document.querySelectorAll('#chips .chip:not(#libToggle):not(#shotBtn)').forEach((chip) => {
+  document.querySelectorAll('#chips .chip:not(#libToggle):not(#shotBtn):not(#webToggle)').forEach((chip) => {
     chip.addEventListener('click', () => {
       inputEl.value = PRESETS[chip.dataset.act] || '';
       inputEl.focus();
@@ -570,7 +604,7 @@
   function syncLibToggle() {
     const btn = $('libToggle');
     btn.classList.toggle('active', libOn);
-    btn.innerHTML = '<span>📚</span>' + (libOn ? '查资料：开' : '查资料');
+    btn.innerHTML = '<span>📚</span>' + (libOn ? '资料：开' : '资料');
     btn.title = libOn ? '提问时会自动检索课程资料库' : '点击开启资料检索';
   }
   $('libToggle').addEventListener('click', () => {
@@ -579,6 +613,20 @@
     syncLibToggle();
     toast(libOn ? '资料检索已开启' : '资料检索已关闭');
   });
+
+  function syncWebToggle() {
+    const btn = $('webToggle');
+    btn.classList.toggle('active', webOn);
+    btn.innerHTML = '<span>🌐</span>' + (webOn ? '联网：开' : '联网');
+    btn.title = webOn ? '提问时会自动联网搜索最新信息' : '点击开启联网搜索';
+  }
+  $('webToggle').addEventListener('click', () => {
+    webOn = !webOn;
+    try { localStorage.setItem(STORE_WEB, webOn ? '1' : '0') } catch {}
+    syncWebToggle();
+    toast(webOn ? '联网搜索已开启' : '联网搜索已关闭');
+  });
+  syncWebToggle();
   syncLibToggle();
 
   ctxToggle.addEventListener('click', () => {
@@ -601,6 +649,18 @@
 
   msgsEl.addEventListener('scroll', () => jumpBtn.classList.toggle('show', !nearBottom()));
   jumpBtn.addEventListener('click', () => scrollToBottom(true));
+
+  // 代码块「复制」按钮（data-copy）：全局事件委托
+  document.addEventListener('click', async (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest('[data-copy]') : null;
+    if (!btn) return;
+    const block = btn.closest('.code-block');
+    const code = block && block.querySelector('pre code');
+    if (!code) return;
+    e.preventDefault();
+    const ok = await copyText(code.textContent || '');
+    toast(ok ? '代码已复制' : '复制失败');
+  });
 
   document.addEventListener('keydown', (e) => {
     // Esc：生成中先停止，否则关闭面板
